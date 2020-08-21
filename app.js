@@ -27,51 +27,41 @@ function getToken(func){
         "appsecret": config.appsecret,
     }, function(err, body) {
         if (!err) {
-            var code = req.body.authCode;
             var accessToken = body.access_token;
             func(accessToken);
         } else{
-            console.err('获取access_token失败');
+            console.error('获取access_token失败');
         }
     })
 }
 
 function regCallback(){
     getToken(function(accessToken){
-        HttpUtils.post("/callback/register_call_back", {
+        HttpUtils.post("/call_back/register_call_back", {
             'access_token': accessToken,
             'call_back_tag': ['attendance_check_record'],
             'token': 'abcdef',
             'aes_key': 'abcdefghijklmnopqrstuvwxyz12345678912345678',
-            'url': '218.90.4.230:3000/callback/attendance_check_record',
+            'url': 'http://218.90.4.230:3000/callback',
         }, function(err, body){
             if(err){
-                console.err('注册回调失败');
-            }
+                console.error('注册回调失败');
+            }else{
+				console.log('注册回调成功');
+			}
         });
     });
 }
 
-// //注册回调
-// HttpUtils.post("/callback/register_call_back", {
-//         'access_token': accessToken,
-//         'call_back_tag': ['attendance_check_record'],
-//         'token': 'abcdef',
-//         'aes_key': 'abcdefghijklmnopqrstuvwxyz12345678912345678',
-//         'url': '218.90.4.230:3000/callback',
-//     }, function(err, body){
-//         if(err){
-//             console.err('注册回调失败');
-//         }
-//     });
-regCallback();
-app.use('/callback/attendance_check_record', function(err, body){
+app.use('/callback', function(err, body){
     if (!err) {
-        console.log(body);
+        console.log('get cb res success:');
     }else{
-        console.err(err);
+        console.error('cb err');
     }
 });
+
+regCallback();
 
 // 获取用户信息
 app.use('/login', function(req, res) {
@@ -102,17 +92,17 @@ app.use('/login', function(req, res) {
                                 }
                             });
                         } else {
-                            console.err('获取用户信息失败');
+                            console.error('获取用户信息失败');
                         }
                         
                     });
                 } else {
-                    console.err('获取用户id失败');
+                    console.error('获取用户id失败');
                 }
                
             });
         } else {
-            console.err('获取access_token失败');
+            console.error('获取access_token失败');
         }
     });
 
