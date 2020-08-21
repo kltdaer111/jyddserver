@@ -3,9 +3,9 @@ module.exports = {
     /**
      * 开发者后台->应用开发-企业内部应用->选择您创建的小程序->应用首页-查看详情->查看AppKey
      */
-    appkey: '', 
+    appkey: 'dingq2h9ktaeqplzzzsd', 
      /**
      * 开发者后台->应用开发-企业内部应用->选择您创建的小程序->应用首页-查看详情->查看AppKey
      */
-    appsecret: ''
+    appsecret: 'AlC-AEtnvujgHMhDNAC3fcU4ZwF2oIc9ZbtAxigLM8jLxh6OgD8H3agyaYMhiLEA'
 }
