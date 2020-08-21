@@ -37,8 +37,7 @@ function getToken(func){
 
 function regCallback(){
     getToken(function(accessToken){
-        HttpUtils.post("/call_back/register_call_back", {
-            'access_token': accessToken,
+        HttpUtils.post("/call_back/register_call_back?access_token=" + accessToken, {
             'call_back_tag': ['attendance_check_record'],
             'token': 'abcdef',
             'aes_key': 'abcdefghijklmnopqrstuvwxyz12345678912345678',
