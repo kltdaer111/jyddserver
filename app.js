@@ -23,6 +23,11 @@ HttpUtils = new httpReq(config.oapiHost);
 //"use strict";
 const crypto = require("crypto-js");
 
+//TODO
+var env_token = '';
+var corp_id = 'dinga6294718083c0cdb35c2f4657eb6378f';
+
+
 //封装使用AES加密的方法
 // function aesEncrept(data, key, iv){
 // 　　//实例化一个cipher加密对象，使用aes192进行加密，key作为密钥
@@ -33,32 +38,6 @@ const crypto = require("crypto-js");
 // 　　return crypted;
 // }
 
-//封装对应的AES解密方法
-function aesDecrept(dataStr, encodingKey) {
-    console.log('length：' + encodingKey.length);
-    var raw_key = crypto.enc.Base64.parse(encodingKey);
-    var key = raw_key.toString(crypto.enc.Utf8);
-    console.log('key:' + key);
-    var iv = key.slice(0, 16);
-    const decipher = crypto.AES.decrypt(dataStr, key,{
-        mode: crypto.mode.CBC,
-        padding: crypto.pad.Pkcs7,
-        iv: crypto.enc.Utf8.parse(iv),
-    });
-
-    const res = crypto.enc.Utf8.stringify(decipher).toString();
-    return res;
-
-    // var decipher = crypto.createDecipher("aes-128-cbc", key, iv);
-    // var cipherChunks = [];
-
-    // decipher.setAutoPadding(true);
-    // cipherChunks.push(decipher.update(dataStr, 'base64', 'utf8'));
-    // cipherChunks.push(decipher.final('utf8'));
-    // return cipherChunks.join('');
-}
-
-
 //获取token
 function getToken(func){
     HttpUtils.get("/gettoken", {
@@ -67,6 +46,7 @@ function getToken(func){
     }, function(err, body) {
         if (!err) {
             var accessToken = body.access_token;
+			env_token = accessToken;
             func(accessToken);
         } else{
             console.error('获取access_token失败');
@@ -75,15 +55,53 @@ function getToken(func){
 }
 
 //解码
-function dddecode(str, encoding_aeskey){
-    encoding_aeskey += '=';
-    // console.log('encoding length:' + encoding_aeskey.length);
-    // var aes_key = new Buffer(encoding_aeskey, 'base64').toString();
-    // console.log('aes_key:' + aes_key + ' ' + aes_key.length)
-    // iv = aes_key.slice(0, 16);
-    // console.log('str:' + str);
-    return aesDecrept(str, encoding_aeskey);
+function dddecode(dataStr, encodingKey){
+    encodingKey += '=';
+	var raw_key = crypto.enc.Base64.parse(encodingKey);
+    var key = crypto.enc.Latin1.stringify(raw_key);
+	console.log('length:' + key.length);
+	//var key = raw_key.toString(crypto.enc.Utf8);
+    console.log('key:' + key);
+    var iv = key.slice(0, 16);
+    const decipher = crypto.AES.decrypt(dataStr, raw_key, {
+        mode: crypto.mode.CBC,
+        padding: crypto.pad.Pkcs7,
+        iv: crypto.enc.Latin1.parse(iv),
+    });
+
+    var res = crypto.enc.Utf8.stringify(decipher).toString();
+    return res;
 }
+
+function numberTo32Buf(number){
+//	var arr = new Int32Array(number);
+//	return arr.toString();
+	var buf = Buffer.alloc(32);
+	buf.writeInt32BE(64);
+	return buf;
+}
+
+//编码
+function ddencode(msg, corpid){
+	var randomChar = '1234567887654321';
+	var buf1 = Buffer.from(randomChar, 'latin1');
+	var buf2 = Buffer.alloc(32);
+	buf2.writeInt32BE(msg.length);
+	var buf3 = Buffer.from(msg, 'utf8');
+	var buf4 = Buffer.from(corpid, 'latin1');
+	var buf = Buffer.concat([buf1, buf2, buf3, buf4]);
+	return buf.toString();
+}
+
+//签名
+function signature(token, timestamp, nonce, encrypt){
+	var arr = [token, timestamp, nonce, encrypt];
+	arr.sort();
+	var str = arr[0] + arr[1] + arr[2] + arr[3];
+	return str;
+}
+
+console.log('test:' + ddencode('success', '1dsfsdfsdf'));
 
 function regCallback(){
     getToken(function(accessToken){
@@ -108,6 +126,17 @@ app.use('/callback', function(req, res){
     console.log(req.body);
     var data = dddecode(req.body.encrypt, 'xxxxxxxxlvdhntotr3x9qhlbytb18zyz5zxxxxxxxxx');
     console.log('answer:' + data.length + ' ' + data);
+	var encrypt = ddencode('success', corp_id);
+	var date = new Date();
+	var timestamp = Date.parse() / 1000 + '';
+	var nonce = '123421';
+	var sig = signature(env_token, timestamp, nonce, encrypt);
+	res.send({
+		msg_signature: sig,
+		timeStamp: timestamp,
+		nonce: nonce,
+		encrypt: encrypt
+	});
     // if (!err) {
     //     console.log('get cb res success:');
     // }else{
