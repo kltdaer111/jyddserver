@@ -9,6 +9,7 @@ var bodyParser = require('body-parser');
 var app = express();
 
 var config = require('./config.default.js');
+const Http = require('./libs/http');
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -18,6 +19,59 @@ app.use(bodyParser.urlencoded({
 app.use(cookieParser());
 
 HttpUtils = new httpReq(config.oapiHost);
+
+//获取token
+function getToken(func){
+    HttpUtils.get("/gettoken", {
+        "appkey": config.appkey,
+        "appsecret": config.appsecret,
+    }, function(err, body) {
+        if (!err) {
+            var code = req.body.authCode;
+            var accessToken = body.access_token;
+            func(accessToken);
+        } else{
+            console.err('获取access_token失败');
+        }
+    })
+}
+
+function regCallback(){
+    getToken(function(accessToken){
+        HttpUtils.post("/callback/register_call_back", {
+            'access_token': accessToken,
+            'call_back_tag': ['attendance_check_record'],
+            'token': 'abcdef',
+            'aes_key': 'abcdefghijklmnopqrstuvwxyz12345678912345678',
+            'url': '218.90.4.230:3000/callback/attendance_check_record',
+        }, function(err, body){
+            if(err){
+                console.err('注册回调失败');
+            }
+        });
+    });
+}
+
+// //注册回调
+// HttpUtils.post("/callback/register_call_back", {
+//         'access_token': accessToken,
+//         'call_back_tag': ['attendance_check_record'],
+//         'token': 'abcdef',
+//         'aes_key': 'abcdefghijklmnopqrstuvwxyz12345678912345678',
+//         'url': '218.90.4.230:3000/callback',
+//     }, function(err, body){
+//         if(err){
+//             console.err('注册回调失败');
+//         }
+//     });
+regCallback();
+app.use('/callback/attendance_check_record', function(err, body){
+    if (!err) {
+        console.log(body);
+    }else{
+        console.err(err);
+    }
+});
 
 // 获取用户信息
 app.use('/login', function(req, res) {
