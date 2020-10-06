@@ -30,6 +30,7 @@ Http.prototype.get = function(path, params, callback) {
 
 Http.prototype.post = function(path, params, postData, callback) {
     var url = this.joinParams(path, params);
+    console.log(postData);
     var obj = {
         method: 'POST',
         url: url,
